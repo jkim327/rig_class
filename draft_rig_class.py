@@ -1,6 +1,6 @@
 ###########################
 #Class for rigging in maya
-#03.31.2020
+#04.04.2020
 #
 #**Temporaility, the scope is limited to FK. (Ik will be added later)
 ###########################
@@ -74,7 +74,7 @@ class RigObjects(object):#NamingComp as well?
     1. Creation -> cmds.spaceLocator, cmds.joint, cmds.nurbsCircle(temp)
     2. MatchTransform
     3. Constraint
-    4. Create nodes as buffers
+    4. Create buffer nodes -> makie group, matchTransform, parenting?
     """
     def __init__(self, obj_kind):
         """
@@ -86,7 +86,6 @@ class RigObjects(object):#NamingComp as well?
         """
         self.obj_kind = obj_kind
 
-    #.....should...I make individual classes? like... Class Locator -> loc = Locator()...
     def createObj(self, obj_kind):
 
         cmds.select(cl=True)#To avoid any error
@@ -100,11 +99,9 @@ class RigObjects(object):#NamingComp as well?
 
         return object
 
-
     def renameObj(self, new_name):
         """
         Rename the object with new naming combination.
-        The object should be selected.
         """
         name = new_name
         cmds.select(self)

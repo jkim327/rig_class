@@ -55,6 +55,7 @@ class NamingComp(object):
                         'obj_type': obj_type}
         return obj_name_dic
 
+    #Do we need name_dict? 
     def name_string(name_dict):
         side = name_dict.get('side')
         limb = name_dict.get('limb')
@@ -99,6 +100,8 @@ class RigObjects(object):#NamingComp as well?
 
         return object
 
+    #testing_class file
+    #
     def renameObj(self, new_name):
         """
         Rename the object with new naming combination.
@@ -107,7 +110,30 @@ class RigObjects(object):#NamingComp as well?
         cmds.select(self)
         cmds.rename(self, name)
 
-    def createBuff(self):
+    def getPos(self):
+        """
+        Get object's position values
+        """
+
+    def matchTrs(self, source):
+        '''
+        Description:
+            Match transformation both rotation and position.
+        Parameters:
+            source
+        Returns:
+            None
+        '''
+        cmds.matchTransform(self, source, position=True, rotation=True)
+
+    def parentObj(self, source):
+        """
+        parenting
+        """
+    # getPos, matchTrs, parentObj -> can create joint at locator's positiong and parent them. + orienting
+    # Should I..make a class for Joint as well?.....
+    # createBuff also can be divided into smaller pieces... i think...
+        def createBuff(self):
         '''
         Description:
             Create a buffer node and a locator between the parent node and the actual object.
@@ -137,24 +163,6 @@ class RigObjects(object):#NamingComp as well?
         cmds.parent(sel, buffLoc)
 
         return buffGrp
-
-    def matchTrs(self, source):
-        '''
-        Description:
-            Match transformation both rotation and position.
-        Parameters:
-            source
-        Returns:
-            None
-        '''
-        cmds.matchTransform(self, source, position=True, rotation=True)
-
-    def createJntChain(self):
-        """
-        Create the joint with the locator's transform values.
-            1. Create joints in chain.[with list?]
-            2. Create joints individually and parent them in order.
-        """
 
 
 

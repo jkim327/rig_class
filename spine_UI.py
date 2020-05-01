@@ -3,6 +3,10 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from shiboken2 import wrapInstance
+
+import logging
+logger = logging.getLogger(__name__)
+
 """
 try:
     from PySide2.QtGui import *
@@ -31,9 +35,9 @@ def _getMayaWindow():
         return wrapInstance (long (ptr), QMainWindow)
 
 
-class spine_work(QDialog, object):
+class spine_window(QDialog, object):
     def __init__(self):
-        super(spine_work, self).__init__(parent=_getMayaWindow())
+        super(spine_window, self).__init__(parent=_getMayaWindow())
 
         winName = 'spine_tool_window'
 
@@ -167,17 +171,28 @@ class spine_work(QDialog, object):
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
+        #----------------signals-------------------
+        #change img thumbnails when radio button is clicked.
         self.FK_spine_opt.clicked.connect(self.show_fk)
         self.IK_spine_opt.clicked.connect(self.show_ik)
 
         #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
-
+        #spin box and slider are connected
         self.spine_int.valueChanged.connect(self.slider_change)
         self.spine_int_slider.valueChanged.connect(self.spin_change)
 
+        #the int value affects function
+        self.sample_btn.clicked.connect(self.call_sample)
+
+        #create spine rig
+        self.run_btn.clicked.connect(self.create_spine)
+
+        #close the window
+        self.close_btn.clicked.connect(self.close_window)
+
 
     def retranslateUi(self, spine_dialog):
-        spine_dialog.setWindowTitle(QtWidgets.QApplication.translate("spine_dialog", "Dialog", None, -1))
+        spine_dialog.setWindowTitle(QtWidgets.QApplication.translate("spine_dialog", "Spine", None, -1))
         self.spine_label.setText(QtWidgets.QApplication.translate("spine_dialog", "spine", None, -1))
         self.FK_spine_opt.setText(QtWidgets.QApplication.translate("spine_dialog", "FK Spine", None, -1))
         self.IK_spine_opt.setText(QtWidgets.QApplication.translate("spine_dialog", "IK Spine", None, -1))
@@ -186,6 +201,7 @@ class spine_work(QDialog, object):
         self.close_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "Close", None, -1))
         self.sample_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "call sample", None, -1))
 
+    #----------slots--------------
     def show_fk(self):
         self.img_field.setPixmap(QtGui.QPixmap("bell.png"))
         print 'fk'
@@ -204,10 +220,41 @@ class spine_work(QDialog, object):
         size = self.spine_int_slider.value()
         self.spine_int.setValue(size)
 
+    def call_sample(self):
+        val = self.spine_int.value()
+        print 'val received'
+        sample = SpineRig()
+        sample.create_sample(val)
+
+    def close_window(self):
+        self.close
+
+    def create_spine(self):
+
+        temp = cmds.select('spine_0_temp_jnt', hi=True)
+        temp = cmds.ls(sl=True)
+
+        name = self.name_field.toPlainText()
+
+        if not temp:
+            return logging.error('Nothing has selected. Select the sample joint.')
+
+        if not name:
+            return logging.error('Name is not specified.')
+
+        if self.FK_spine_opt.isChecked():
+            spineJnt = FK_rig()
+            spineJnt.create_FK(temp, name)
+        elif self.IK_spine_opt.isChecked():
+            pass
 
 
 
 def initUI():
-    spine_work()
+    spine_window()
+
+
+
+
 
 initUI()

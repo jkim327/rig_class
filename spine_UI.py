@@ -44,8 +44,8 @@ class spine_window(QDialog, object):
         # Check if this UI is already open. If it is then delete it before  creating it anew
         if cmds.window (winName, exists=True):
             cmds.deleteUI (winName, window=True)
-        elif cmds.windowPref (winName, exists=True):
-            cmds.windowPref (winName, remove=True)
+        #elif cmds.windowPref (winName, exists=True):
+        #    cmds.windowPref (winName, remove=True)
 
         # Set the dialog object name, window title and size
         self.setObjectName(winName)
@@ -242,9 +242,13 @@ class spine_window(QDialog, object):
         if not name:
             return logging.error('Name is not specified.')
 
+        if not self.FK_spine_opt.isChecked() or self.IK_spine_opt.isChecked():
+            return logging.error('Spine type is not specified.')
+
         if self.FK_spine_opt.isChecked():
             spineJnt = FK_rig()
             spineJnt.create_FK(temp, name)
+            return logging.info('FK has been selected')
         elif self.IK_spine_opt.isChecked():
             pass
 

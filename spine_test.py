@@ -38,24 +38,40 @@ class SpineRig(object):
         logging.info('Created a {}-joint chain.'.format(jntNum))
 
     def create_control(self, target):
-        pass
+        ctl = cmds.circle(r=5, nr=(0,1,0))
+        
 
-class FK_rig(object):
+    def create_group(self, name):
+        cmds.group()
+
+
+class FK_rig(SpineRig):
 
     def __init__(self):
-        pass
+        super(FK_rig, self).__init__()
+
 
     def create_FK(self, temp, name):
-        logging.info('FK spine has been selected')
+        new_jnts = self.create_FK_joint(temp, name)
+        for new in new_jnts:
+            print new
+
+    def create_FK_joint(self, temp, name):
         temp_list = temp
         jnt_list = []
         num = 1
         cmds.select(cl=True)
 
         for tempJnt in temp_list:
-            print temp
             transVar = cmds.xform(tempJnt, worldSpace = True, query = True, translation = True)
-            print transVar
             newJnt = cmds.joint(n = '{}_spine_{}_jnt'.format(name, num), absolute = True, position = transVar)
             jnt_list.append(newJnt)
             num = num + 1
+        
+        return jnt_list
+
+    def create_FK_con(self):
+        pos_group = SpineRig()
+        pos_group.create_group()
+        cmds.parent(ctl, pos_group)
+

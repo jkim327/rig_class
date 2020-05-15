@@ -15,7 +15,7 @@ import maya.OpenMayaUI as OpenMayaUI
 import maya.cmds as cmds
 
 #import modules
-import rig_class.spine_test as st
+import rig_class.spine_test_v5 as st
 import rig_class.spine_data as sd
 
 def _getMayaWindow():
@@ -40,7 +40,7 @@ class spine_window(QDialog, object):
         self.spine_data = sd.SpineData()
 
 
-        self.spine_object = st.SpineRig()
+        self.spine_object = st.SpineRig(self.spine_data)
 
 
         # If the UI already exists, delete the old one.
@@ -56,7 +56,7 @@ class spine_window(QDialog, object):
         self.customUI()
 
         self.show()
-        
+
 
     def customUI(self):
 
@@ -81,7 +81,7 @@ class spine_window(QDialog, object):
         self.spine_label.setObjectName("spine_label")
         self.spine_num_layout.addWidget(self.spine_label)
         self.spine_int = QtWidgets.QSpinBox(self.horizontalLayoutWidget)
-        self.spine_int.setMinimum(2)
+        self.spine_int.setMinimum(3)
         self.spine_int.setMaximum(10)
         self.spine_int.setObjectName("spine_int")
         self.spine_num_layout.addWidget(self.spine_int)
@@ -122,6 +122,7 @@ class spine_window(QDialog, object):
         self.spine_opt_ver_layout.addItem(spacerItem1)
         self.FK_spine_opt = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
         self.FK_spine_opt.setObjectName("FK_spine_opt")
+        self.FK_spine_opt.setChecked(True)
         #self.spine_data.fk_rig
         self.spine_opt_ver_layout.addWidget(self.FK_spine_opt)
         self.IK_spine_opt = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
@@ -225,12 +226,15 @@ class spine_window(QDialog, object):
 
 
 
-    
+
     def call_sample(self):
 
-        self.spine_data.num_jnt = self.spine_int.value()#update data object
+        self.spine_object.spine_data.num_jnt = self.spine_int.value()#update data object
 
-        self.spine_object.create_sample(self.spine_data.num_jnt)
+        #print self.spine_data.num_jnt #this returns None
+        #print self.spine_object.spine_data #this returns correct dict
+
+        self.spine_object.create_sample()#self.spine_data.num_jnt
 
 
     def close_window(self):
@@ -239,30 +243,32 @@ class spine_window(QDialog, object):
 
     def create_spine(self):
 
+
         #replace
-        temp = cmds.select('spine_0_temp_jnt', hi=True)
-        temp = cmds.ls(sl=True)
+        self.spine_object.spine_data.cha_naming = self.name_field.toPlainText()
+        self.spine_object.spine_data.fk_rig = self.FK_spine_opt.isChecked()
+        self.spine_object.spine_data.ik_rig = self.IK_spine_opt.isChecked()
 
-        name = self.name_field.toPlainText()
 
-        if not temp:
-            return logging.error('Nothing has selected. Select the sample joint.')
+        if not self.spine_object.spine_data.temp_jnt_list:
+            return logging.error('Nothing exists. Please set temporary joints first.')
 
-        if not name:
+        if not self.spine_object.spine_data.cha_naming:
             return logging.error('Name is not specified.')
-
+        """
         #replace with data object
-        if not self.FK_spine_opt.isChecked() or self.IK_spine_opt.isChecked():
+        if not self.FK_spine_opt.isChecked() or not self.IK_spine_opt.isChecked():
             return logging.error('Spine type is not specified.')
-
+        """
         if self.FK_spine_opt.isChecked():
-            spineJnt = FK_rig()
-            #replace with sample rig
-            spineJnt.create_FK(temp, name)
-            return logging.info('FK has been selected')
-        elif self.IK_spine_opt.isChecked():
-            pass
+            spineJnt = st.FK_rig(self.spine_object.spine_data)
+            spineJnt.create_FK()
+            logging.info('FK Creation {}'.format(self.spine_object.spine_data))
 
+        elif self.IK_spine_opt.isChecked():
+            spineJnt = st.IK_rig(self.spine_object.spine_data)
+            spineJnt.create_IK()
+            logging.info('IK Creation {}'.format(self.spine_object.spine_data))
 
 
 def initUI():

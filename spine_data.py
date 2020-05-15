@@ -1,21 +1,21 @@
 class SpineData():
 
     def __init__(self,
-                 sample_rig = False,
                  num_jnt = None,
                  fk_rig = False,
                  ik_rig = False,
                  temp_jnt_list = list(),
                  final_jnt_list = list(),
                  cha_naming = None,
+                 ctl_list = list(),
                  ):
-        self.sample_rig = sample_rig
         self.num_jnt = num_jnt
         self.fk_rig = fk_rig
         self.ik_rig = ik_rig
         self.temp_jnt_list = temp_jnt_list
         self.final_jnt_list = final_jnt_list
         self.cha_naming = cha_naming
+        self.ctl_list = ctl_list
 
         self.data = self.__dict__
 

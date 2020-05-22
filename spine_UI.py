@@ -1,34 +1,29 @@
+#import UI modules
 from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from shiboken2 import wrapInstance
 
+#import logger
 import logging
 logger = logging.getLogger(__name__)
 
-"""
-try:
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
-    from PySide2.QtWidgets import *
-    from shiboken2 import wrapInstance
-except:
-    from PySide.QtGui import *
-    from PySide.QtCore import *
-    from shiboken import wrapInstance
-"""
-import os
+#import maya modules
+import os.path
 import maya.OpenMayaUI as OpenMayaUI
 import maya.cmds as cmds
 
+#import modules
+import rig_class.spine_rig as st
+import rig_class.spine_data as sd
+
+#get file directory
+base_dir = os.path.dirname(os.path.abspath(st.__file__))
+fk_path = '{}\\fk_img.png'.format(base_dir)
+ik_path = '{}\\ik_img.png'.format(base_dir)
 
 def _getMayaWindow():
-
-    """
-    Return the Maya main window widget as a Python object
-    :return: Maya Window
-    """
 
     ptr = OpenMayaUI.MQtUtil.mainWindow ()
     if ptr is not None:
@@ -36,16 +31,18 @@ def _getMayaWindow():
 
 
 class spine_window(QDialog, object):
-    def __init__(self):
+    def __init__(self, spine_data = None):
         super(spine_window, self).__init__(parent=_getMayaWindow())
 
         winName = 'spine_tool_window'
 
-        # Check if this UI is already open. If it is then delete it before  creating it anew
+        self.spine_data = sd.SpineData()
+        self.spine_object = st.SpineRig(self.spine_data)
+
+
+        # If the UI already exists, delete the old one.
         if cmds.window (winName, exists=True):
             cmds.deleteUI (winName, window=True)
-        #elif cmds.windowPref (winName, exists=True):
-        #    cmds.windowPref (winName, remove=True)
 
         # Set the dialog object name, window title and size
         self.setObjectName(winName)
@@ -56,6 +53,7 @@ class spine_window(QDialog, object):
         self.customUI()
 
         self.show()
+
 
     def customUI(self):
 
@@ -80,7 +78,7 @@ class spine_window(QDialog, object):
         self.spine_label.setObjectName("spine_label")
         self.spine_num_layout.addWidget(self.spine_label)
         self.spine_int = QtWidgets.QSpinBox(self.horizontalLayoutWidget)
-        self.spine_int.setMinimum(1)
+        self.spine_int.setMinimum(3)
         self.spine_int.setMaximum(10)
         self.spine_int.setObjectName("spine_int")
         self.spine_num_layout.addWidget(self.spine_int)
@@ -92,7 +90,7 @@ class spine_window(QDialog, object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.spine_int_slider.sizePolicy().hasHeightForWidth())
         self.spine_int_slider.setSizePolicy(sizePolicy)
-        self.spine_int_slider.setMinimum(1)
+        self.spine_int_slider.setMinimum(3)
         self.spine_int_slider.setMaximum(10)
         self.spine_int_slider.setOrientation(QtCore.Qt.Horizontal)
         self.spine_int_slider.setObjectName("spine_int_slider")
@@ -111,7 +109,7 @@ class spine_window(QDialog, object):
         self.img_field.setSizePolicy(sizePolicy)
         self.img_field.setMaximumSize(QtCore.QSize(132, 189))
         self.img_field.setText("")
-        self.img_field.setPixmap(QtGui.QPixmap("images/bell.png"))
+        self.img_field.setPixmap(QtGui.QPixmap(fk_path))
         self.img_field.setScaledContents(True)
         self.img_field.setObjectName("img_field")
         self.spine_opt_ho_layout.addWidget(self.img_field)
@@ -121,9 +119,12 @@ class spine_window(QDialog, object):
         self.spine_opt_ver_layout.addItem(spacerItem1)
         self.FK_spine_opt = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
         self.FK_spine_opt.setObjectName("FK_spine_opt")
+        self.FK_spine_opt.setChecked(True)
+        #self.spine_data.fk_rig
         self.spine_opt_ver_layout.addWidget(self.FK_spine_opt)
         self.IK_spine_opt = QtWidgets.QRadioButton(self.horizontalLayoutWidget_2)
         self.IK_spine_opt.setObjectName("IK_spine_opt")
+        #self.spine_data.ik_rig
         self.spine_opt_ver_layout.addWidget(self.IK_spine_opt)
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.spine_opt_ver_layout.addItem(spacerItem2)
@@ -176,10 +177,9 @@ class spine_window(QDialog, object):
         self.FK_spine_opt.clicked.connect(self.show_fk)
         self.IK_spine_opt.clicked.connect(self.show_ik)
 
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
         #spin box and slider are connected
         self.spine_int.valueChanged.connect(self.slider_change)
-        self.spine_int_slider.valueChanged.connect(self.spin_change)
+        self.spine_int_slider.valueChanged.connect(self.spine_change)
 
         #the int value affects function
         self.sample_btn.clicked.connect(self.call_sample)
@@ -201,57 +201,50 @@ class spine_window(QDialog, object):
         self.close_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "Close", None, -1))
         self.sample_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "call sample", None, -1))
 
-    #----------slots--------------
+    #----------------slots-------------------
     def show_fk(self):
-        self.img_field.setPixmap(QtGui.QPixmap("bell.png"))
-        print 'fk'
+        self.img_field.setPixmap(QtGui.QPixmap(fk_path))
 
     def show_ik(self):
-        self.img_field.setPixmap(QtGui.QPixmap("turnip.png"))
-        print 'ik'
+        self.img_field.setPixmap(QtGui.QPixmap(ik_path))
 
     def slider_change(self):
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
         size = self.spine_int.value()
         self.spine_int_slider.setValue(size)
 
-    def spin_change(self):
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
+    def spine_change(self):
         size = self.spine_int_slider.value()
         self.spine_int.setValue(size)
 
     def call_sample(self):
-        val = self.spine_int.value()
-        print 'val received'
-        sample = SpineRig()
-        sample.create_sample(val)
+        self.spine_object.spine_data.num_jnt = self.spine_int.value()#update data object
+        self.spine_object.create_sample()
 
     def close_window(self):
         self.close
 
     def create_spine(self):
 
-        temp = cmds.select('spine_0_temp_jnt', hi=True)
-        temp = cmds.ls(sl=True)
+        self.spine_object.spine_data.cha_naming = self.name_field.toPlainText()
+        self.spine_object.spine_data.fk_rig = self.FK_spine_opt.isChecked()
+        self.spine_object.spine_data.ik_rig = self.IK_spine_opt.isChecked()
 
-        name = self.name_field.toPlainText()
+        if not self.spine_object.spine_data.temp_jnt_list:
+            return logging.error('Nothing exists. Please set temporary joints first.')
 
-        if not temp:
-            return logging.error('Nothing has selected. Select the sample joint.')
-
-        if not name:
+        if not self.spine_object.spine_data.cha_naming:
             return logging.error('Name is not specified.')
 
-        if not self.FK_spine_opt.isChecked() or self.IK_spine_opt.isChecked():
-            return logging.error('Spine type is not specified.')
 
         if self.FK_spine_opt.isChecked():
-            spineJnt = FK_rig()
-            spineJnt.create_FK(temp, name)
-            return logging.info('FK has been selected')
-        elif self.IK_spine_opt.isChecked():
-            pass
+            spineJnt = st.FK_rig(self.spine_object.spine_data)
+            spineJnt.create_FK()
+            logging.info('FK Creation {}'.format(self.spine_object.spine_data))
 
+        elif self.IK_spine_opt.isChecked():
+            spineJnt = st.IK_rig(self.spine_object.spine_data)
+            spineJnt.create_IK()
+            logging.info('IK Creation {}'.format(self.spine_object.spine_data))
 
 
 def initUI():

@@ -10,20 +10,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 #import maya modules
-import os
+import os.path
 import maya.OpenMayaUI as OpenMayaUI
 import maya.cmds as cmds
 
 #import modules
-import rig_class.spine_test_v5 as st
+import rig_class.spine_rig as st
 import rig_class.spine_data as sd
 
-def _getMayaWindow():
+#get file directory
+base_dir = os.path.dirname(os.path.abspath(st.__file__))
+fk_path = '{}\\fk_img.png'.format(base_dir)
+ik_path = '{}\\ik_img.png'.format(base_dir)
 
-    """
-    Return the Maya main window widget as a Python object
-    :return: Maya Window
-    """
+def _getMayaWindow():
 
     ptr = OpenMayaUI.MQtUtil.mainWindow ()
     if ptr is not None:
@@ -36,10 +36,7 @@ class spine_window(QDialog, object):
 
         winName = 'spine_tool_window'
 
-        #replace example: self.spine_data.num_jnt
         self.spine_data = sd.SpineData()
-
-
         self.spine_object = st.SpineRig(self.spine_data)
 
 
@@ -93,7 +90,7 @@ class spine_window(QDialog, object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.spine_int_slider.sizePolicy().hasHeightForWidth())
         self.spine_int_slider.setSizePolicy(sizePolicy)
-        self.spine_int_slider.setMinimum(1)
+        self.spine_int_slider.setMinimum(3)
         self.spine_int_slider.setMaximum(10)
         self.spine_int_slider.setOrientation(QtCore.Qt.Horizontal)
         self.spine_int_slider.setObjectName("spine_int_slider")
@@ -112,7 +109,7 @@ class spine_window(QDialog, object):
         self.img_field.setSizePolicy(sizePolicy)
         self.img_field.setMaximumSize(QtCore.QSize(132, 189))
         self.img_field.setText("")
-        self.img_field.setPixmap(QtGui.QPixmap("C:/Users/usr/Documents/maya/rig_class/bell.png"))
+        self.img_field.setPixmap(QtGui.QPixmap(fk_path))
         self.img_field.setScaledContents(True)
         self.img_field.setObjectName("img_field")
         self.spine_opt_ho_layout.addWidget(self.img_field)
@@ -180,7 +177,6 @@ class spine_window(QDialog, object):
         self.FK_spine_opt.clicked.connect(self.show_fk)
         self.IK_spine_opt.clicked.connect(self.show_ik)
 
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
         #spin box and slider are connected
         self.spine_int.valueChanged.connect(self.slider_change)
         self.spine_int_slider.valueChanged.connect(self.spine_change)
@@ -205,61 +201,41 @@ class spine_window(QDialog, object):
         self.close_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "Close", None, -1))
         self.sample_btn.setText(QtWidgets.QApplication.translate("spine_dialog", "call sample", None, -1))
 
-    #----------slots--------------
+    #----------------slots-------------------
     def show_fk(self):
-        self.img_field.setPixmap(QtGui.QPixmap("C:/Users/usr/Documents/maya/rig_class/bell.png"))
-        print 'fk'
+        self.img_field.setPixmap(QtGui.QPixmap(fk_path))
 
     def show_ik(self):
-        self.img_field.setPixmap(QtGui.QPixmap("C:/Users/usr/Documents/maya/rig_class/turnip.png"))
-        print 'ik'
+        self.img_field.setPixmap(QtGui.QPixmap(ik_path))
 
     def slider_change(self):
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
         size = self.spine_int.value()
         self.spine_int_slider.setValue(size)
 
     def spine_change(self):
-        #QObject::connect(spinBox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)) );
         size = self.spine_int_slider.value()
         self.spine_int.setValue(size)
 
-
-
-
     def call_sample(self):
-
         self.spine_object.spine_data.num_jnt = self.spine_int.value()#update data object
-
-        #print self.spine_data.num_jnt #this returns None
-        #print self.spine_object.spine_data #this returns correct dict
-
-        self.spine_object.create_sample()#self.spine_data.num_jnt
-
+        self.spine_object.create_sample()
 
     def close_window(self):
         self.close
 
-
     def create_spine(self):
 
-
-        #replace
         self.spine_object.spine_data.cha_naming = self.name_field.toPlainText()
         self.spine_object.spine_data.fk_rig = self.FK_spine_opt.isChecked()
         self.spine_object.spine_data.ik_rig = self.IK_spine_opt.isChecked()
-
 
         if not self.spine_object.spine_data.temp_jnt_list:
             return logging.error('Nothing exists. Please set temporary joints first.')
 
         if not self.spine_object.spine_data.cha_naming:
             return logging.error('Name is not specified.')
-        """
-        #replace with data object
-        if not self.FK_spine_opt.isChecked() or not self.IK_spine_opt.isChecked():
-            return logging.error('Spine type is not specified.')
-        """
+
+
         if self.FK_spine_opt.isChecked():
             spineJnt = st.FK_rig(self.spine_object.spine_data)
             spineJnt.create_FK()
